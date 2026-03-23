@@ -2,6 +2,8 @@ let nextTaskId = 1;
 
 const allowedPriorities = ["low", "medium", "high"];
 const requiredFields = ["title", "description", "completed", "priority"];
+const maxTitleLength = 100;
+const maxDescriptionLength = 500;
 const getCurrentTimestamp = () => new Date().toISOString();
 
 const initialTasks = [
@@ -15,7 +17,7 @@ const initialTasks = [
   },
 ];
 
-const tasks = initialTasks.map((task) => ({ ...task }));
+const tasks = structuredClone(initialTasks);
 nextTaskId = tasks.length + 1;
 
 const validateTaskPayload = (payload) => {
@@ -35,12 +37,16 @@ const validateTaskPayload = (payload) => {
     errors.push("title must be a string");
   } else if (!payload.title.trim()) {
     errors.push("title cannot be empty");
+  } else if (payload.title.trim().length > maxTitleLength) {
+    errors.push(`title cannot exceed ${maxTitleLength} characters`);
   }
 
   if (typeof payload.description !== "string") {
     errors.push("description must be a string");
   } else if (!payload.description.trim()) {
     errors.push("description cannot be empty");
+  } else if (payload.description.trim().length > maxDescriptionLength) {
+    errors.push(`description cannot exceed ${maxDescriptionLength} characters`);
   }
 
   if (typeof payload.completed !== "boolean") {
@@ -61,7 +67,8 @@ const getTaskId = (value) => {
   return Number.isInteger(id) && id > 0 ? id : null;
 };
 
-const getPriority = (value) => value.trim().toLowerCase();
+const getPriority = (value) =>
+  typeof value === "string" ? value.trim().toLowerCase() : "";
 
 const buildTaskData = (body) => ({
   title: body.title.trim(),
@@ -69,6 +76,12 @@ const buildTaskData = (body) => ({
   completed: body.completed,
   priority: getPriority(body.priority),
 });
+
+const getNextTaskId = () => {
+  const taskId = nextTaskId;
+  nextTaskId += 1;
+  return taskId;
+};
 
 const findTaskById = (id) => tasks.find((task) => task.id === id);
 const findTaskIndexById = (id) => tasks.findIndex((task) => task.id === id);
@@ -210,7 +223,7 @@ const createTask = (req, res) => {
     }
 
     const newTask = {
-      id: nextTaskId++,
+      id: getNextTaskId(),
       ...buildTaskData(req.body),
       createdAt: getCurrentTimestamp(),
     };

@@ -1,11 +1,7 @@
 const express = require("express");
 const taskRoute = require("./routes/taskRoute");
 
-try {
-  require("dotenv").config();
-} catch (error) {
-  // Allow the app to run even when dotenv is not installed.
-}
+require("dotenv").config();
 
 const createApp = () => {
   const app = express();
